@@ -1,6 +1,7 @@
 # Dialectal Arabic Segmenter 
-Dialectal Arabic Segmenter is a freeware module developed by the ALT team at Qatar Computing Research Institute (QCRI) to process Dialectal Arabic. The segmenter is built using a collection of tweets from frour regions - Egypt, Gulf, Maghrib and Levantine -
-Arabic Dialects Segmenter uses Keras/BiLSTM/ChainCRF. 
+Dialectal Arabic Segmenter is a freeware module developed by the ALT team at Qatar Computing Research Institute (QCRI) to process Dialectal Arabic. The segmenter is built using a collection of tweets from frour regions - Egypt, Gulf, Maghrib and Levantine.
+ 
+Arabic Dialects Segmenter implemented using Keras/BiLSTM/ChainCRF. 
 
 # Requirements
 
@@ -13,14 +14,13 @@ This segmenter requires the following packages:
 - `keras` version 1.2.2 or later: http://keras.io
 - `nltk` version 3.0 or later
 
-	
 ## Installation
 
 You can install the Dialectal Arabic Segmenter by cloning the repo:
 
 ### Installing Dialectal Arabic Segmenter from github
 Clone the repo from the github using the following command:
-```sh
+```
 git clone https://github.com/qcri/dialectal_segmenter.git
 ```
 Or download the compressed file of the project, extract it.
@@ -32,10 +32,9 @@ python code/dialects_segmenter.py -i [in-file] -o [out-file]
 ```
 
 For more details see:
-Furthermore, you could use the segmentation module to segment a text file of Arabic script encoded in ``UTF-8``. Just use ``segment_file`` insted of ``segment_text``.
-The ``segment_file`` function requires two two positional parameters, namely the file to be segmented and a file name to generate the output in.
 
-``` python code/dialects_segmenter.py -h
+``` 
+python code/dialects_segmenter.py -h
 ```
 
 
@@ -60,7 +59,7 @@ You can ask questions and join the development discussion:
 You can also post **bug reports and feature requests** (only) in [Github issues](https://github.com/qcri/dialectal_arabic_tools/issues). Make sure to read [our guidelines](https://github.com/qcri/dialectal_arabic_tools/blob/master/CONTRIBUTING.md) first.
 
 
-##License
+## License
 
 Dialectal Arabic Segmenter is covered by the [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License](https://creativecommons.org/licenses/by-nc-nd/4.0/).
 
