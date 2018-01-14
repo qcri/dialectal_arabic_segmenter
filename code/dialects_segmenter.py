@@ -162,7 +162,7 @@ def getLabels(filepath):
     return list(set(labels))
 
 
-def load_data():
+def load_data(options,seg_tags):
     X_words_train, y_train = load_file(options.train)
 
     index2word = _fit_term_index(X_words_train, reserved=['<PAD>', '<UNK>'])
@@ -234,7 +234,6 @@ def load_model(model_path, max_features, word_embedding_dim, maxlen, nb_seg_tags
     model.add(TimeDistributed(Dense(nb_seg_tags)))
     crf = ChainCRF()
     model.add(crf)
-    #model.summary()
     model.compile(loss=crf.sparse_loss,
                    optimizer= RMSprop(0.01),
                    metrics=['sparse_categorical_accuracy'])
@@ -250,16 +249,17 @@ def load_model(model_path, max_features, word_embedding_dim, maxlen, nb_seg_tags
 
 def main():
 
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument("-T", "--train",  default="data/joint.trian.3", help="Train set location")
-    argparser.add_argument("-m", "--model",  default="models", help="Test set location")
-    argparser.add_argument("-l", "--lookup",  default="data/lookup_list.txt", help="Lookup list location")
-    argparser.add_argument("-i", "--input",  default="", help="Input stdin or file")
-    argparser.add_argument("-t", "--test",   default="", help="Test set location")
-    argparser.add_argument("-o", "--output", default="", help="output file")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-T", "--train",  default="data/joint.trian.3", help="Train set location")
+    parser.add_argument("-m", "--model",  default="models", help="Test set location")
+    parser.add_argument("-l", "--lookup",  default="data/lookup_list.txt", help="Lookup list location")
+    parser.add_argument("-i", "--input",  default="", help="Input stdin or file")
+    parser.add_argument("-t", "--test",   default="", help="Test set location")
+    parser.add_argument("-o", "--output", default="", help="output file")
 
-    options = argparser.parse_args()
+    options = parser.parse_args()
 
+    print("Arg:",options.train)
     assert os.path.isfile(options.train)
     assert os.path.exists(options.model)
     #assert os.path.isfile(options.test)
@@ -273,7 +273,7 @@ def main():
     lstm_dim = 200
 
     #print('Loading data...')
-    (X_words_train,y_train), (index2word, index2pos),word2index = load_data()
+    (X_words_train,y_train), (index2word, index2pos),word2index = load_data(options,seg_tags)
 
 
 
