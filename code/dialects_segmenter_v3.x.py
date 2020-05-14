@@ -18,7 +18,6 @@ from __future__ import print_function
 
 __author__ = 'Ahmed Abdelali (aabdelali@hbku.edu.qa)'
 
-
 import numpy as np
 import sys
 import os
@@ -26,26 +25,25 @@ import re
 import argparse
 from collections import Counter
 from itertools import chain
-from keras.preprocessing import sequence
-from keras.models import Model
-from keras.layers import Input, merge
-from keras.layers import Dense, Embedding, LSTM, Bidirectional, Dropout
-from keras.layers.wrappers import TimeDistributed
-from keras.optimizers import RMSprop
-from keras.callbacks import Callback
-#from keras.utils.data_utils import get_file
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.models import Sequential
-from keras.models import model_from_json
-from keras.layers import ChainCRF
+import tensorflow as tf
+from tensorflow.keras.preprocessing import sequence
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Dense, Embedding, LSTM, Bidirectional, Dropout
+from tensorflow.keras.layers import TimeDistributed
+from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.callbacks import Callback, EarlyStopping, ModelCheckpoint
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import model_from_json
 import codecs
+import json
 from time import gmtime, strftime
 import datetime
 from nltk.tokenize import word_tokenize
 from sklearn.metrics import classification_report, f1_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.metrics import classification_report, confusion_matrix
-
+from ChainCRF import ChainCRF
 
 np.random.seed(1337)  # for reproducibility
 #sys.stdin = codecs.getreader('utf-8')(sys.stdin)
@@ -145,10 +143,10 @@ def tokenizeline(txtstring):
                 or valid_number(word)
                 or valide_time(word)):
 
-                elements.append(word);
+                elements.append(word)
             else:
                 for elt in word_tokenize(word):
-                    elements.append(elt);
+                    elements.append(elt)
     output = ''
     for elt in elements:
         output = output + ' ' + elt 
@@ -285,11 +283,12 @@ def build_model(model_path, max_features, word_embedding_dim, maxlen, nb_seg_tag
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--train",  default="../data/joint.trian.3", help="Train set location")
-    parser.add_argument("-d", "--dev",  default="../data/joint.dev.3", help="Dev set location")
+    main_path = "/Users/ahmedmoorsy/Desktop/dialectal_arabic_segmenter/"
+    parser.add_argument("-t", "--train",  default= "data/joint.trian.3", help="Train set location")
+    parser.add_argument("-d", "--dev",  default= "data/joint.dev.3", help="Dev set location")
     parser.add_argument("-s", "--test",   default="", help="Test set location")
-    parser.add_argument("-m", "--model",  default="../models", help="Model location")
-    parser.add_argument("-l", "--lookup",  default="../data/lookup_list.txt", help="Lookup list location")
+    parser.add_argument("-m", "--model",  default="models", help="Model location")
+    parser.add_argument("-l", "--lookup",  default= "data/lookup_list.txt", help="Lookup list location")
     parser.add_argument("-p", "--epochs",  default=100, type=int, help="Lookup list location")
     parser.add_argument("-i", "--input",  default="", help="Input stdin or file")
     parser.add_argument("-o", "--output", default="", help="output file")
@@ -353,32 +352,35 @@ def main():
         model_json = model.to_json()
         with open(options.model + '/'+options.train.split('/')[-1]+'_keras_weights.json', 'w') as json_file:
             json_file.write(model_json)
-        
+        print("saved json")
         model.fit(x=X_words_train, y=y_train,
           validation_data=(X_words_dev, y_dev),
           verbose=1,
           batch_size=64,
-          nb_epoch=options.epochs,
+          epochs=options.epochs,
           callbacks=[early_stopping, checkpointer])  
         eprint(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ' Save the trained model...')
         # serialize model to JSON
         #
     elif(options.task == 'decode'):
         #model = build_model(options.model, max_features, word_embedding_dim, maxlen, nb_seg_tags, lstm_dim)
+        print("Loading: ",options.model + '/'+options.train.split('/')[-1]+'_keras_weights.json')
         json_file = open(options.model + '/'+options.train.split('/')[-1]+'_keras_weights.json', 'r')
-        loaded_model_json = json_file.read()
+        loaded_model_json = json.load(json_file)
         json_file.close()
-        model = model_from_json(loaded_model_json)
-        model.load_weights(options.model + '/'+options.train.split('/')[-1]+'_keras_weights.hdf5')
-
-
+        
+        #print(type(loaded_model_json))
+        #print(loaded_model_json)
+        #model = model_from_json(str(loaded_model_json).replace('\'','"'))
+        model = build_model(options.model, max_features, word_embedding_dim, maxlen, nb_seg_tags, lstm_dim)
+        #model.load_weights(options.model + '/'+'seg_keras_weights.hdf5')
+        model.load_weights(options.model + '/'+'joint.trian.3_keras_weights.hdf5')
 
         eprint(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ' Loading input...')
         sentences = []
         sentences_len = []
         l  = 0
         for line in sys.stdin:
-            
             sentence = []
 
             if len(line) < 2:
@@ -469,8 +471,6 @@ def main():
         preds = [idx2Label[x] for x in y_test_pred]
         srcs  = list(chain.from_iterable(words for words in X_words))
         refs  = list(chain.from_iterable(tags for tags in y_test_ref))
-
-
 
         #refs  = [(tag for tag in tags) for tags in y_test_ref]
         print("Evaluation Seg Charachters:")

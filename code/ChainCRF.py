@@ -7,64 +7,38 @@ Author: Philipp Gross, https://github.com/fchollet/keras/pull/4621/files
 from __future__ import absolute_import
 from __future__ import print_function
 
-from keras import backend as K
-from keras import initializers, regularizers, constraints
-from keras.engine import Layer, InputSpec
+from tensorflow.keras import backend as K
+from tensorflow.keras import initializers, regularizers, constraints
+from tensorflow.keras.layers import Layer, InputSpec
 
-if K._BACKEND == 'tensorflow':
-    import tensorflow as tf
-    
-    def logsumexp(x, axis=None):
-        '''Returns `log(sum(exp(x), axis=axis))` with improved numerical stability.
-        '''
-        return tf.reduce_logsumexp(x, axis=[axis])
-    
-    
-    def batch_gather(reference, indices):
-        '''Batchwise gathering of row indices.
-    
-        The numpy equivalent is reference[np.arange(batch_size), indices].
-    
-        # Arguments
-            reference: tensor with ndim >= 2 of shape
-              (batch_size, dim1, dim2, ..., dimN)
-            indices: 1d integer tensor of shape (batch_size) satisfiying
-              0 <= i < dim2 for each element i.
-    
-        # Returns
-            A tensor with shape (batch_size, dim2, ..., dimN)
-            equal to reference[1:batch_size, indices]
-        '''
-        batch_size = K.shape(reference)[0]
-        indices = tf.stack([tf.range(batch_size), indices], axis=1)
-        return tf.gather_nd(reference, indices)
-else:
-    import theano.tensor as T
-    def logsumexp(x, axis=None):
-        '''Returns `log(sum(exp(x), axis=axis))` with improved numerical stability.
-        '''
-        xmax = K.max(x, axis=axis, keepdims=True)
-        xmax_ = K.max(x, axis=axis)
-        return xmax_ + K.log(K.sum(K.exp(x - xmax), axis=axis))
-    
-    
-    def batch_gather(reference, indices):
-        '''Batchwise gathering of row indices.
-    
-        The numpy equivalent is reference[np.arange(batch_size), indices],
-    
-        # Arguments
-            reference: tensor with ndim >= 2 of shape
-              (batch_size, dim1, dim2, ..., dimN)
-            indices: 1d integer tensor of shape (batch_size) satisfiying
-              0 <= i < dim2 for each element i.
-    
-        # Returns
-            A tensor with shape (batch_size, dim2, ..., dimN)
-            equal to reference[1:batch_size, indices]
-        '''
-        batch_size = K.shape(reference)[0]
-        return reference[T.arange(batch_size), indices]
+
+import tensorflow as tf
+
+def logsumexp(x, axis=None):
+    '''Returns `log(sum(exp(x), axis=axis))` with improved numerical stability.
+    '''
+    return tf.reduce_logsumexp(x, axis=[axis])
+
+
+def batch_gather(reference, indices):
+    '''Batchwise gathering of row indices.
+
+    The numpy equivalent is reference[np.arange(batch_size), indices].
+
+    # Arguments
+        reference: tensor with ndim >= 2 of shape
+            (batch_size, dim1, dim2, ..., dimN)
+        indices: 1d integer tensor of shape (batch_size) satisfiying
+            0 <= i < dim2 for each element i.
+
+    # Returns
+        A tensor with shape (batch_size, dim2, ..., dimN)
+        equal to reference[1:batch_size, indices]
+    '''
+    batch_size = K.shape(reference)[0]
+    indices = tf.stack([tf.range(batch_size), indices], axis=1)
+    return tf.gather_nd(reference, indices)
+
 
 def path_energy(y, x, U, b_start=None, b_end=None, mask=None):
     '''Calculates the energy of a tag path y for a given input x (with mask),
@@ -314,9 +288,10 @@ class ChainCRF(Layer):
         return mask
 
     def _fetch_mask(self):
+        assert self._inbound_nodes, 'CRF has not connected to any layer.'
         mask = None
-        if self.inbound_nodes:
-            mask = self.inbound_nodes[0].input_masks[0]
+        # if self._inbound_nodes:
+        #     mask = self. get_input_mask_at(0)
         return mask
 
     def build(self, input_shape):
@@ -328,19 +303,19 @@ class ChainCRF(Layer):
         self.input_spec = [InputSpec(dtype=K.floatx(),
                                      shape=(None, n_steps, n_classes))]
 
-        self.U = self.add_weight((n_classes, n_classes),
+        self.U = self.add_weight(shape=(n_classes, n_classes),
                                  initializer=self.init,
                                  name='{}_U'.format(self.name),
                                  regularizer=self.U_regularizer,
                                  constraint=self.U_constraint)
 
-        self.b_start = self.add_weight((n_classes, ),
+        self.b_start = self.add_weight(shape=(n_classes, ),
                                        initializer='zero',
                                        name='{}_b_start'.format(self.name),
                                        regularizer=self.b_start_regularizer,
                                        constraint=self.b_start_constraint)
 
-        self.b_end = self.add_weight((n_classes, ),
+        self.b_end = self.add_weight(shape=(n_classes, ),
                                      initializer='zero',
                                      name='{}_b_end'.format(self.name),
                                      regularizer=self.b_end_regularizer,
@@ -359,7 +334,7 @@ class ChainCRF(Layer):
         return K.in_train_phase(x, y_pred_one_hot)
 
     def loss(self, y_true, y_pred):
-        '''Linear Chain Conditional Random Field loss function.
+        '''Linear Chain Conditional Random Field loss function.∂ç
         '''
         mask = self._fetch_mask()
         return chain_crf_loss(y_true, y_pred, self.U, self.b_start, self.b_end, mask)
@@ -409,8 +384,8 @@ def create_custom_objects():
 
 
 if __name__ == '__main__':
-    from keras.models import Sequential
-    from keras.layers import Embedding
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Embedding
     import numpy as np
     vocab_size = 20
     n_classes = 11
