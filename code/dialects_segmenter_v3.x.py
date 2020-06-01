@@ -283,7 +283,7 @@ def build_model(model_path, max_features, word_embedding_dim, maxlen, nb_seg_tag
 def main():
 
     parser = argparse.ArgumentParser()
-    main_path = "/Users/ahmedmoorsy/Desktop/dialectal_arabic_segmenter/"
+
     parser.add_argument("-t", "--train",  default= "data/joint.trian.3", help="Train set location")
     parser.add_argument("-d", "--dev",  default= "data/joint.dev.3", help="Dev set location")
     parser.add_argument("-s", "--test",   default="", help="Test set location")
