@@ -363,15 +363,7 @@ def main():
         # serialize model to JSON
         #
     elif(options.task == 'decode'):
-        #model = build_model(options.model, max_features, word_embedding_dim, maxlen, nb_seg_tags, lstm_dim)
-        print("Loading: ",options.model + '/'+options.train.split('/')[-1]+'_keras_weights.json')
-        json_file = open(options.model + '/'+options.train.split('/')[-1]+'_keras_weights.json', 'r')
-        loaded_model_json = json.load(json_file)
-        json_file.close()
-        
-        #print(type(loaded_model_json))
-        #print(loaded_model_json)
-        #model = model_from_json(str(loaded_model_json).replace('\'','"'))
+
         model = build_model(options.model, max_features, word_embedding_dim, maxlen, nb_seg_tags, lstm_dim)
         #model.load_weights(options.model + '/'+'seg_keras_weights.hdf5')
         model.load_weights(options.model + '/'+'joint.trian.3_keras_weights.hdf5')
@@ -451,10 +443,7 @@ def main():
 
     elif(options.task == 'evaluate'):
 
-        json_file = open(options.model + '/'+options.train.split('/')[-1]+'_keras_weights.json', 'r')
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = model_from_json(loaded_model_json)
+        model = build_model(options.model, max_features, word_embedding_dim, maxlen, nb_seg_tags, lstm_dim)
         model.load_weights(options.model + '/'+options.train.split('/')[-1]+'_keras_weights.hdf5')
 
         eprint(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ' Loading input...')
@@ -473,13 +462,13 @@ def main():
         refs  = list(chain.from_iterable(tags for tags in y_test_ref))
 
         #refs  = [(tag for tag in tags) for tags in y_test_ref]
-        print("Evaluation Seg Charachters:")
+        print("Evaluation Seg Characters:")
         print(classification_report(
                 refs,
                 preds,
-                digits=5,
+                digits=3,
                 target_names=list(set(refs+preds))
-            ).split('\n')[-2:])
+            )) #.split('\n')[-2:]
 
         outfile = open(options.test+'.out','w')
         for i in range(len(preds)):
@@ -489,12 +478,12 @@ def main():
         (words,rtags,ptags) = build_words(srcs,refs,preds)
 
         print("Evaluation Seg Words:")
-        print(classification_report(
+        print('\n'.join(classification_report(
                 rtags,
                 ptags,
-                digits=5,
+                digits=3,
                 target_names=list(set(rtags+ptags))
-            ).split('\n')[-2:])
+            ).split('\n')[-4:])) #
 
         outfile = open(options.test+'.words.out','w')
         for i in range(len(words)):
